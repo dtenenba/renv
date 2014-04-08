@@ -42,9 +42,14 @@ d.each do |dir|
     date = "#{year}-#{month}-#{day}"
     conf = IO.readlines("#{fulldir}/PrivateHeaders/config.h")
     os = conf.find {|i| i =~ /R_OS/}.strip.split('"').last
-    selected = (link == shortname)
+    selected = nil
+    if (link == shortname)
+        selected = "*"
+    else
+        selected = ""
+    end
     cands[shortname] = {:selected => selected ,:version => version, :svnrev => svnrev,
-        :status => :status, :date => date, :os => os}
+        :status => status, :date => date, :os => os}
 end
 
 
@@ -56,7 +61,12 @@ end
 
 
 if ARGV.empty?
-    pp cands
+    for key in cands.keys.sort
+        h = cands[key]
+        puts "#{h[:selected]}#{key} #{h[:version]} #{h[:svnrev]} #{h[:status]} #{h[:date]} #{h[:os]}"
+    end
+
+#    pp cands
     exit
 end
 
