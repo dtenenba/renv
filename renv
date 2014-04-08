@@ -1,0 +1,81 @@
+#!/usr/bin/env ruby
+
+require 'fileutils'
+require 'pp'
+
+FR_HOME="/Library/Frameworks"
+
+R = "#{FR_HOME}/R.framework"
+
+
+if File.exists? R and !File.symlink? R
+    puts "#{R} is not a symlink, exiting!"
+    exit(1)
+end
+
+link = ""
+if File.exists? R
+    link = File.readlink(R).sub("R.framework.", "").sub("/Library/Frameworks/", "").sub(/\/$/, "")
+end
+
+
+cands = {}
+shortnames = []
+
+d = Dir.new(FR_HOME)
+d.each do |dir|
+    fulldir = "#{FR_HOME}/#{dir}"
+    next unless File.directory? fulldir
+    next unless dir =~ /^R\.framework\./
+    shortname = dir.sub /^R\.framework\./, ""
+    shortnames.push shortname
+    vers = IO.readlines("#{fulldir}/Headers/Rversion.h")
+    major = vers.find {|i| i =~ /R_MAJOR/}.split(' ').last.gsub('"', '')
+    minor = vers.find {|i| i =~ /R_MINOR/}.split(' ').last.gsub('"', '')
+    version = "#{major}.#{minor}"
+    svnrev = vers.find {|i| i =~ /R_SVN_REVISION/}.split(' ').last
+    status = vers.find {|i| i =~ /R_STATUS/}.strip.split('"').last
+    status = "(none)" if status =~ /^#/
+    year = vers.find {|i| i =~ /R_YEAR/}.strip.split('"').last
+    month = vers.find {|i| i =~ /R_MONTH/}.strip.split('"').last
+    day = vers.find {|i| i =~ /R_DAY/}.strip.split('"').last
+    date = "#{year}-#{month}-#{day}"
+    conf = IO.readlines("#{fulldir}/PrivateHeaders/config.h")
+    os = conf.find {|i| i =~ /R_OS/}.strip.split('"').last
+    selected = (link == shortname)
+    cands[shortname] = {:selected => selected ,:version => version, :svnrev => svnrev,
+        :status => :status, :date => date, :os => os}
+end
+
+
+
+if shortnames.empty?
+    puts "no shortnames, exiting!"
+    exit(1)
+end
+
+
+if ARGV.empty?
+    pp cands
+    exit
+end
+
+unless shortnames.include? ARGV.first
+    puts "#{ARGV.first} is an invalid choice, exiting"
+    exit(1)
+end
+
+
+if File.exists? R
+    begin
+        FileUtils.rm R
+    rescue
+    end
+end
+
+begin
+    FileUtils.ln_s "#{FR_HOME}/R.framework.#{ARGV.first}", R
+rescue
+    puts "couldn't do it; maybe need sudo?"
+end
+
