@@ -76,14 +76,11 @@ unless shortnames.include? ARGV.first
 end
 
 
-if File.exists? R
-    begin
-        FileUtils.rm R
-    rescue
-    end
-end
 
 begin
+    if File.exists? R
+        FileUtils.rm R
+    end
     FileUtils.ln_s "#{FR_HOME}/R.framework.#{ARGV.first}", R
 rescue
     puts "couldn't do it; maybe need sudo?"
