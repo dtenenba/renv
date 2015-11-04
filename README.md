@@ -27,7 +27,7 @@ Note that in my nomenclature devel means BioC devel, not R-devel.
 
 So if I wanted to switch to the "develSL" version I would do:
 
-sudo renv develSL
+    sudo renv develSL
 
 
 
